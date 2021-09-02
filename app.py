@@ -45,7 +45,6 @@ def init_product_table():
                      "user_id INTEGER NOT NULL,"
                      "title TEXT NOT NULL,"
                      "description TEXT NOT NULL,"
-                     "image TEXT NOT NULL,"
                      "category TEXT NOT NULL,"
                      "price TEXT NOT NULL,"
                      "FOREIGN KEY (user_id) REFERENCES user (user_id))")
@@ -171,7 +170,6 @@ def products():
             user_id = request.json['user_id']
             title = request.json['title']
             description = request.json['description']
-            image = request.json['image']
             category = request.json['category']
             price = request.json['price']
 
@@ -181,9 +179,8 @@ def products():
                                "user_id, "
                                "title, "
                                "description, "
-                               "image, "
                                "category, "
-                               "price) VALUES(?, ?, ?, ?, ?)", (user_id, title, description, image, category, price))
+                               "price) VALUES(?, ?, ?, ?, ?)", (user_id, title, description, category, price))
                 conn.commit()
                 response["message"] = "successfully added new product to database"
                 response["status_code"] = 201
@@ -220,15 +217,14 @@ def change_user_product(product_id):
             user_id = request.json['user_id']
             title = request.json['title']
             description = request.json['description']
-            image = request.json['image']
             category = request.json['category']
             price = request.json['price']
 
             with sqlite3.connect("meaty.db") as conn:
                 cursor = conn.cursor()
-                cursor.execute("UPDATE product SET title=? AND description=? AND image=? AND category=? AND price=? "
+                cursor.execute("UPDATE product SET title=? AND description=? AND category=? AND price=? "
                                "WHERE user_id=? "
-                               "AND prod_id=?", (title, description, image, category, price, user_id, product_id))
+                               "AND prod_id=?", (title, description, category, price, user_id, product_id))
                 conn.commit()
                 response["message"] = "Product was successfully updated"
                 response["status_code"] = 201
