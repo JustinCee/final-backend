@@ -167,7 +167,6 @@ def products():
     # Create a new product
     if request.method == "POST":
         try:
-            user_id = request.json['user_id']
             title = request.json['title']
             description = request.json['description']
             category = request.json['category']
@@ -176,11 +175,10 @@ def products():
             with sqlite3.connect("meaty.db") as conn:
                 cursor = conn.cursor()
                 cursor.execute("INSERT INTO products("
-                               "user_id, "
                                "title, "
                                "description, "
                                "category, "
-                               "price) VALUES(?, ?, ?, ?, ?)", (user_id, title, description, category, price))
+                               "price) VALUES(?, ?, ?, ?)", (title, description, category, price))
                 conn.commit()
                 response["message"] = "successfully added new product to database"
                 response["status_code"] = 201
@@ -191,7 +189,7 @@ def products():
             return response
 
 
-@app.route('/product/<int:user_id>', methods=["GET"])
+@app.route('/products/<int:user_id>', methods=["GET"])
 def get_user_products(user_id):
     response = {}
 
