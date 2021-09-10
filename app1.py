@@ -6,8 +6,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_mail import Mail, Message
 
+
 # create class as part of flask requirements
-from app import dict_factory
 
 
 class User(object):
@@ -21,7 +21,7 @@ class User(object):
 class CreateTable:
 
     def __init__(self):
-        self.conn = sqlite3.connect('meaty.db')
+        self.conn = sqlite3.connect('meat.db')
         self.cursor = self.conn.cursor()
         self.conn.execute("CREATE TABLE IF NOT EXISTS users(user_id INTEGER PRIMARY KEY AUTOINCREMENT,"
                           "username TEXT NOT NULL, "
@@ -32,8 +32,8 @@ class CreateTable:
                           "address TEXT NOT NULL)")
         print("users table created successfully")
 
-        self.conn.execute("CREATE TABLE IF NOT EXISTS products(prod_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                          "name TEXT NOT NULL,"
+        self.conn.execute("CREATE TABLE IF NOT EXISTS sales(prod_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                          "prod_name TEXT NOT NULL,"
                           "price TEXT NOT NULL,"
                           "description TEXT NOT NULL,"
                           "prod_type TEXT NOT NULL,"
@@ -46,9 +46,9 @@ CreateTable()
 
 
 def fetch_users():
-    conn = sqlite3.connect('meaty.db')
+    conn = sqlite3.connect('meat.db')
     cursor = conn.cursor()
-    with sqlite3.connect('meaty.db') as conn:
+    with sqlite3.connect('meat.db') as conn:
         cursor.execute("SELECT * FROM users")
         user = cursor.fetchall()
 
@@ -99,8 +99,7 @@ def user_registration():
         username = request.form["username"]
         password = request.form["password"]
 
-        with sqlite3.connect("meaty.db") as conn:
-            conn.row_factory = dict_factory
+        with sqlite3.connect("meat.db") as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password,))
             user = cursor.fetchone()
@@ -121,7 +120,7 @@ def user_registration():
         password = request.form['password']
         address = request.form['address']
 
-        with sqlite3.connect('meaty.db') as conn:
+        with sqlite3.connect('meat.db') as conn:
             cursor = conn.cursor()
             cursor.execute("INSERT INTO users("
                            "username,"
@@ -147,16 +146,18 @@ def prod_registration():
 
     try:
         if request.method == "POST":
-            name = request.form['name']
+            name = request.form['prod_name']
             price = request.form['price']
             description = request.form['description']
             prod_type = request.form['prod_type']
             quantity = request.form['quantity']
 
-            with sqlite3.connect('meaty.db') as conn:
+            with sqlite3.connect('meat.db') as conn:
                 cursor = conn.cursor()
-                cursor.execute("INSERT INTO products("
-                               "name,"
+                cursor.execute("SELECT * FROM sales")
+                print(cursor.fetchall())
+                cursor.execute("INSERT INTO sales("
+                               "prod_name,"
                                "price,"
                                "description,"
                                "prod_type,"
@@ -175,9 +176,9 @@ def prod_registration():
 def show_products():
     response = {}
 
-    with sqlite3.connect("meaty.db") as conn:
+    with sqlite3.connect("meat.db") as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM products")
+        cursor.execute("SELECT * FROM sales")
 
         response["status_code"] = 200
         response["description"] = "Displaying all products successfully"
@@ -188,9 +189,9 @@ def show_products():
 @app.route('/delete-products/<int:prod_id>')
 def delete_products(prod_id):
     response = {}
-    with sqlite3.connect("meaty.db") as conn:
+    with sqlite3.connect("meat.db") as conn:
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM products WHERE prod_id=" + str(prod_id))
+        cursor.execute("DELETE FROM sales WHERE prod_id=" + str(prod_id))
         conn.commit()
         response['status_code'] = 200
         response['message'] = "Product successfully deleted"
@@ -202,15 +203,15 @@ def delete_products(prod_id):
 def edit_products(prod_id):
     response = {}
     if request.method == "PUT":
-        with sqlite3.connect("meaty.db") as conn:
+        with sqlite3.connect("meat.db") as conn:
             incoming_data = dict(request.json)
             put_data = {}
 
             if incoming_data.get("price") is not None:
                 put_data["price"] = incoming_data.get("price")
-                with sqlite3.connect("meaty.db") as conn:
+                with sqlite3.connect("meat.db") as conn:
                     cursor = conn.cursor()
-                    cursor.execute("UPDATE products SET price=? WHERE prod_id=?", (put_data["price"], prod_id))
+                    cursor.execute("UPDATE sales SET price=? WHERE prod_id=?", (put_data["price"], prod_id))
                     conn.commit()
                     response['message'] = "Update was successful"
                     response['status_code'] = 200
@@ -218,9 +219,9 @@ def edit_products(prod_id):
 
             if incoming_data.get("quantity") is not None:
                 put_data["quantity"] = incoming_data.get("quantity")
-                with sqlite3.connect("meaty.db") as conn:
+                with sqlite3.connect("meat.db") as conn:
                     cursor = conn.cursor()
-                    cursor.execute("UPDATE products SET quantity=? WHERE prod_id=?", (put_data["quantity"], prod_id))
+                    cursor.execute("UPDATE sales SET quantity=? WHERE prod_id=?", (put_data["quantity"], prod_id))
                     conn.commit()
                     response['message'] = "Update was successful"
                     response['status_code'] = 200
