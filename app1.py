@@ -3,12 +3,13 @@ import sqlite3
 from smtplib import SMTPRecipientsRefused, SMTPAuthenticationError
 
 from flask import Flask, request, jsonify
-from flask_jwt import JWT, jwt_required, current_identity
 from flask_cors import CORS
 from flask_mail import Mail, Message
 
-
 # create class as part of flask requirements
+from app import dict_factory
+
+
 class User(object):
     def __init__(self, user_id, username, password):
         self.id = user_id
@@ -60,7 +61,6 @@ def fetch_users():
 
 users = fetch_users()
 
-
 user_table = {u.username: u for u in users}
 userid_table = {u.id: u for u in users}
 
@@ -84,27 +84,36 @@ app.config['SECRET_KEY'] = 'super-secret'
 # email tings
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
-app.config['MAIL_USERNAME'] = 'cody01101101@gmail.com'
-app.config['MAIL_PASSWORD'] = 'Polonykop100'
+app.config['MAIL_USERNAME'] = 'pythonflask005@gmail.com'
+app.config['MAIL_PASSWORD'] = 'Python005'
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 mail = Mail(app)
 
-jwt = JWT(app, authenticate, identity)
 
-
-@app.route('/protected')
-@jwt_required()
-def protected():
-    return '%s' % current_identity
-
-
-@app.route('/user-registration/', methods=["POST"])
+@app.route('/user-registration/', methods=["POST", "PATCH"])
 def user_registration():
     response = {}
 
-    if request.method == "POST":
+    if request.method == "PATCH":
+        username = request.form["username"]
+        password = request.form["password"]
 
+        with sqlite3.connect("meaty.db") as conn:
+            conn.row_factory = dict_factory
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password,))
+            user = cursor.fetchone()
+            if user != None:
+                response['status_code'] = 200
+                response['data'] = user
+                return response
+            else:
+                response['status_code'] = 404
+                response['data'] = "User not found"
+                return response
+
+    if request.method == "POST":
         username = request.form['username']
         first_name = request.form['first_name']
         last_name = request.form['last_name']
@@ -126,7 +135,7 @@ def user_registration():
             response["message"] = "success"
             response["status_code"] = 201
 
-            msg = Message('Yo Bro', sender='cody01101101@gmail.com', recipients=[email])
+            msg = Message('Yo Bro', sender='pythonflask005@gmail.com', recipients=[email])
             msg.body = "Welcome " + first_name + ". You have Successfully registered."
             mail.send(msg)
         return response
@@ -138,7 +147,6 @@ def prod_registration():
 
     try:
         if request.method == "POST":
-
             name = request.form['name']
             price = request.form['price']
             description = request.form['description']
@@ -159,10 +167,8 @@ def prod_registration():
                 response["status_code"] = 201
             return response
 
-    except ConnectionError as e:
-        return e
-    except Exception as e:
-        return e
+    finally:
+        "OK"
 
 
 @app.route('/show-products/')
